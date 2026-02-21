@@ -1140,7 +1140,7 @@ function showCreatePackModal() {
     <h3 style="margin:0 0 16px;font-size:16px;">📦 ${t('sharePack')}</h3>
     <div style="margin-bottom:12px;">
       <label style="font-size:12px;color:#888;">${t('packName')}</label>
-      <input id="pack_name" style="width:100%;padding:8px 12px;background:#0f0f0f;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-size:13px;margin-top:4px;" placeholder="My AI Sources">
+      <input id="pack_name" style="width:100%;padding:8px 12px;background:#0f0f0f;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-size:13px;margin-top:4px;" placeholder="${currentUser ? currentUser.name + "'s AI Sources" : 'My AI Sources'}" value="${currentUser ? currentUser.name + "'s AI Sources" : ''}">
     </div>
     <div style="margin-bottom:16px;">
       <label style="font-size:12px;color:#888;">${t('packDesc')}</label>
@@ -1156,9 +1156,9 @@ function showCreatePackModal() {
 }
 
 async function doCreatePack(btn) {
-  const name = document.getElementById('pack_name').value.trim();
+  const nameEl = document.getElementById('pack_name');
+  const name = nameEl.value.trim() || nameEl.placeholder || 'My AI Sources';
   const description = document.getElementById('pack_desc').value.trim();
-  if (!name) return;
   btn.disabled = true;
   btn.textContent = '...';
   try {
