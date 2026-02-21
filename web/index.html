@@ -53,6 +53,11 @@
   .auth-tools { display: flex; align-items: center; gap: 6px; padding-left: 8px; border-left: 1px solid #333; margin-left: 2px; }
   .auth-bar img { width: 32px; height: 32px; border-radius: 50%; }
   .auth-bar .user-name { font-size: 13px; color: #aaa; }
+  .user-menu { position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .user-dropdown { display: none; position: absolute; top: 100%; right: 0; margin-top: 6px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 6px 0; min-width: 120px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+  .user-dropdown.show { display: block; }
+  .user-dropdown a { display: block; padding: 8px 16px; color: #aaa; text-decoration: none; font-size: 13px; transition: all .15s; }
+  .user-dropdown a:hover { background: #2a2a2a; color: #fff; }
   .auth-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #444; background: #2a2a2a; color: #ccc; cursor: pointer; font-size: 13px; text-decoration: none; transition: all .2s; }
   .auth-btn:hover { border-color: #666; color: #fff; }
   .container { }
@@ -208,9 +213,14 @@ function ghLangHtml() {
 function renderAuthBar() {
   const bar = document.getElementById('authBar');
   if (currentUser) {
-    bar.innerHTML = `<img src="${currentUser.avatar}" alt="">`
-      + `<span class="user-name">${currentUser.name}</span>`
-      + `<a class="auth-btn" href="#" onclick="doLogout(); return false;">${t('logout')}</a>`
+    bar.innerHTML = `<div class="user-menu" onclick="document.getElementById('userDropdown').classList.toggle('show')">
+        <img src="${currentUser.avatar}" alt="">
+        <span class="user-name">${currentUser.name}</span>
+        <div id="userDropdown" class="user-dropdown">
+          <a href="https://github.com/kevinho/ai-digest" target="_blank">⭐ GitHub</a>
+          <a href="#" onclick="event.stopPropagation();doLogout();return false;">${t('logout')}</a>
+        </div>
+      </div>`
       + ghLangHtml();
   } else {
     bar.innerHTML = `<a class="auth-btn" href="${API}/auth/google?origin=${encodeURIComponent(location.origin)}">${t('signIn')}</a>`
@@ -612,6 +622,10 @@ if (location.hash) {
   }
 }
 
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('userDropdown');
+  if (dd && !e.target.closest('.user-menu')) dd.classList.remove('show');
+});
 applyLang();
 checkAuth().then(() => renderList());
 </script>
