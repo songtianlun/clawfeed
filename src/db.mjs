@@ -18,8 +18,6 @@ if (existsSync(envPath)) {
   }
 }
 
-const ADMIN_EMAILS = (env.ADMIN_EMAILS || process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
-
 let _db;
 
 export function getDb(dbPath) {
@@ -79,12 +77,12 @@ export function createDigest(db, { type, content, metadata = '{}', created_at })
 
 // ── Marks ──
 
-export function listMarks(db, { status, limit = 100, offset = 0, userId, isAdmin } = {}) {
+export function listMarks(db, { status, limit = 100, offset = 0, userId } = {}) {
   let sql = 'SELECT * FROM marks';
   const params = [];
   const conditions = [];
   if (status) { conditions.push('status = ?'); params.push(status); }
-  if (userId && !isAdmin) { conditions.push('user_id = ?'); params.push(userId); }
+  if (userId) { conditions.push('user_id = ?'); params.push(userId); }
   if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ');
   sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
   params.push(limit, offset);
@@ -99,8 +97,7 @@ export function createMark(db, { url, title = '', note = '', userId }) {
   return { id: result.lastInsertRowid, duplicate: false };
 }
 
-export function deleteMark(db, id, userId, isAdmin) {
-  if (isAdmin) return db.prepare('DELETE FROM marks WHERE id = ?').run(id);
+export function deleteMark(db, id, userId) {
   return db.prepare('DELETE FROM marks WHERE id = ? AND user_id = ?').run(id, userId);
 }
 
@@ -120,8 +117,7 @@ export function upsertUser(db, { googleId, email, name, avatar }) {
     db.prepare('UPDATE users SET email = ?, name = ?, avatar = ? WHERE google_id = ?').run(email, name, avatar, googleId);
     return db.prepare('SELECT * FROM users WHERE google_id = ?').get(googleId);
   }
-  const isAdmin = ADMIN_EMAILS.includes(email) ? 1 : 0;
-  db.prepare('INSERT INTO users (google_id, email, name, avatar, is_admin) VALUES (?, ?, ?, ?, ?)').run(googleId, email, name, avatar, isAdmin);
+  db.prepare('INSERT INTO users (google_id, email, name, avatar) VALUES (?, ?, ?, ?)').run(googleId, email, name, avatar);
   return db.prepare('SELECT * FROM users WHERE google_id = ?').get(googleId);
 }
 

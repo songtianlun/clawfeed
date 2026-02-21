@@ -24,7 +24,7 @@ if (existsSync(envPath)) {
 const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
 const SESSION_SECRET = env.SESSION_SECRET || process.env.SESSION_SECRET;
-const ADMIN_EMAILS = (env.ADMIN_EMAILS || process.env.ADMIN_EMAILS || '').split(',').filter(Boolean);
+const API_KEY = env.API_KEY || process.env.API_KEY || '';
 const ALLOWED_ORIGINS = (env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGINS || 'localhost').split(',').map(o => o.trim());
 const PORT = process.env.DIGEST_PORT || env.DIGEST_PORT || 8767;
 const DB_PATH = process.env.DIGEST_DB || join(ROOT, 'data', 'digest.db');
@@ -108,7 +108,7 @@ function attachUser(req) {
   if (cookies.session) {
     const sess = getSession(db, cookies.session);
     if (sess) {
-      req.user = { id: sess.uid, email: sess.email, name: sess.name, avatar: sess.avatar, is_admin: sess.is_admin };
+      req.user = { id: sess.uid, email: sess.email, name: sess.name, avatar: sess.avatar };
       req.sessionId = cookies.session;
     }
   }
@@ -117,7 +117,7 @@ function attachUser(req) {
 const server = createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
   let { path, params } = parseUrl(req.url);
@@ -187,11 +187,6 @@ const server = createServer(async (req, res) => {
       // Upsert user
       const user = upsertUser(db, { googleId: gUser.id, email: gUser.email, name: gUser.name, avatar: gUser.picture });
 
-      // Migrate existing marks to admin on first login
-      if (user.is_admin) {
-        migrateMarksToUser(db, user.id);
-      }
-
       // Create session
       const sessionId = randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + 30 * 86400000).toISOString();
@@ -236,7 +231,10 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && path === '/api/digests') {
-      if (!req.user || !req.user.is_admin) return json(res, { error: 'admin required' }, 403);
+      const authHeader = req.headers.authorization || '';
+      const bearerKey = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      const queryKey = params.get('api_key') || '';
+      if (!API_KEY || (bearerKey !== API_KEY && queryKey !== API_KEY)) return json(res, { error: 'invalid api key' }, 401);
       const body = await parseBody(req);
       const result = createDigest(db, body);
       return json(res, result, 201);
@@ -247,7 +245,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && path === '/api/marks') {
       if (!req.user) return json(res, { error: 'not authenticated' }, 401);
       const status = params.get('status') || undefined;
-      return json(res, listMarks(db, { status, userId: req.user.id, isAdmin: req.user.is_admin }));
+      return json(res, listMarks(db, { status, userId: req.user.id }));
     }
 
     if (req.method === 'POST' && path === '/api/marks') {
@@ -260,7 +258,7 @@ const server = createServer(async (req, res) => {
     const markMatch = path.match(/^\/api\/marks\/(\d+)$/);
     if (req.method === 'DELETE' && markMatch) {
       if (!req.user) return json(res, { error: 'not authenticated' }, 401);
-      deleteMark(db, parseInt(markMatch[1]), req.user.id, req.user.is_admin);
+      deleteMark(db, parseInt(markMatch[1]), req.user.id);
       return json(res, { ok: true });
     }
 
@@ -277,7 +275,7 @@ const server = createServer(async (req, res) => {
     // GET /marks — backward compat (requires auth)
     if (req.method === 'GET' && path === '/marks') {
       if (!req.user) return json(res, { error: 'not authenticated' }, 401);
-      const marks = listMarks(db, { userId: req.user.id, isAdmin: req.user.is_admin });
+      const marks = listMarks(db, { userId: req.user.id });
       const history = marks.map(m => ({
         action: m.status === 'processed' ? 'processed' : 'mark',
         target: m.url, at: m.created_at, title: m.title || '',
@@ -288,9 +286,7 @@ const server = createServer(async (req, res) => {
     // ── Sources endpoints ──
 
     if (req.method === 'GET' && path === '/api/sources') {
-      if (req.user && req.user.is_admin) {
-        return json(res, listSources(db));
-      } else if (req.user) {
+      if (req.user) {
         return json(res, listSources(db, { userId: req.user.id, includePublic: true }));
       } else {
         return json(res, listSources(db, { includePublic: true }));
@@ -301,7 +297,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && sourceMatch) {
       const s = getSource(db, parseInt(sourceMatch[1]));
       if (!s) return json(res, { error: 'not found' }, 404);
-      if (!s.is_public && (!req.user || (!req.user.is_admin && s.created_by !== req.user.id))) {
+      if (!s.is_public && (!req.user || s.created_by !== req.user.id)) {
         return json(res, { error: 'not found' }, 404);
       }
       return json(res, s);
@@ -340,7 +336,10 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'PUT' && path === '/api/config') {
-      if (!req.user || !req.user.is_admin) return json(res, { error: 'admin required' }, 403);
+      const authHeader = req.headers.authorization || '';
+      const bearerKey = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      const queryKey = params.get('api_key') || '';
+      if (!API_KEY || (bearerKey !== API_KEY && queryKey !== API_KEY)) return json(res, { error: 'invalid api key' }, 401);
       const body = await parseBody(req);
       for (const [k, v] of Object.entries(body)) setConfig(db, k, v);
       return json(res, { ok: true });
