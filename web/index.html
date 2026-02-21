@@ -222,7 +222,7 @@ const I18N = {
     pasteUrl: '🔗 粘贴 URL 添加信息源', detect: '识别', detecting: '识别中...', detected: '识别成功', previewRecent: '最近内容',
     cannotDetect: '无法自动识别，', manualAdd: '手动添加', confirmAdd: '确认添加',
     urlPlaceholder: 'https://...', publicSource: '公开',
-    changelog: '更新日志',
+    changelog: '更新日志', roadmap: '产品路线图',
     sharePack: '📦 分享为 Pack', browsePacks: '🔍 浏览 Packs',
     packName: 'Pack 名称', packDesc: '描述（可选）',
     createPack: '创建 Pack', packCreated: '✅ Pack 已创建！',
@@ -279,7 +279,7 @@ const I18N = {
     pasteUrl: '🔗 Paste URL to add source', detect: 'Detect', detecting: 'Detecting...', detected: 'Detected', previewRecent: 'Recent items',
     cannotDetect: 'Cannot auto-detect. ', manualAdd: 'Manual add', confirmAdd: 'Confirm',
     urlPlaceholder: 'https://...', publicSource: 'Public',
-    changelog: 'Changelog',
+    changelog: 'Changelog', roadmap: 'Roadmap',
     sharePack: '📦 Share as Pack', browsePacks: '🔍 Browse Packs',
     packName: 'Pack Name', packDesc: 'Description (optional)',
     createPack: 'Create Pack', packCreated: '✅ Pack created!',
@@ -355,6 +355,18 @@ function hideChangelog() {
   document.getElementById('changelogOverlay').classList.remove('open');
   document.body.style.overflow = '';
 }
+async function showRoadmap() {
+  const overlay = document.getElementById('changelogOverlay');
+  const content = document.getElementById('changelogContent');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  content.innerHTML = '<p>Loading...</p>';
+  try {
+    const r = await fetch(`${API}/roadmap`);
+    const d = await r.json();
+    content.innerHTML = parseChangelogMd(d.content);
+  } catch { content.innerHTML = '<p>Failed to load roadmap.</p>'; }
+}
 document.addEventListener('keydown', e => { if (e.key === 'Escape') hideChangelog(); });
 
 // API base — auto-detect: if served under /digest/, use /digest/api; otherwise /api
@@ -404,6 +416,7 @@ function renderAuthBar() {
     <div id="moreDropdown" class="user-dropdown">
       <a href="https://github.com/kevinho/ai-digest" target="_blank" onclick="event.stopPropagation();">${ghSvg} GitHub</a>
       <a href="#" onclick="event.stopPropagation();showChangelog();return false;">📋 ${t('changelog')}</a>
+      <a href="#" onclick="event.stopPropagation();showRoadmap();return false;">🗺️ ${t('roadmap')}</a>
     </div>
   </div>`;
   if (currentUser) {
@@ -810,6 +823,20 @@ function renderSourceCard(s, opts = {}) {
   </div>`;
 }
 
+function renderDeletedSourceCard(s) {
+  const icon = SOURCE_ICONS[s.type] || '📦';
+  return `<div class="source-card" style="padding:12px 16px;opacity:0.4;pointer-events:none;filter:grayscale(1);">
+    <div class="source-header">
+      <span class="source-name" style="font-size:14px;">${icon} ${s.name}
+        <span style="font-size:11px;color:#f0b040;background:#3a2a00;padding:1px 6px;border-radius:3px;margin-left:4px;">⚠️ ${lang==='zh'?'已停用':'Deactivated'}</span>
+      </span>
+    </div>
+    <div class="source-meta" style="font-size:11px;">
+      <span style="color:#666;">${s.type}</span>
+    </div>
+  </div>`;
+}
+
 async function renderSources() {
   const list = document.getElementById('list');
   list.innerHTML = `<div class="loading">${t('loading')}</div>`;
@@ -914,7 +941,11 @@ async function renderSources() {
     </div>`;
     html += '<div class="digest-list" style="gap:8px;margin-bottom:16px;">';
     for (const s of subscriptions) {
-      html += renderSourceCard(s, { showToggle: true, showUnsub: true });
+      if (s.sourceDeleted) {
+        html += renderDeletedSourceCard(s);
+      } else {
+        html += renderSourceCard(s, { showToggle: true, showUnsub: true });
+      }
     }
     html += '</div>';
 

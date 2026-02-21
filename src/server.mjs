@@ -5,7 +5,7 @@ import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { randomBytes } from 'crypto';
-import { getDb, listDigests, getDigest, createDigest, listMarks, createMark, deleteMark, getConfig, setConfig, upsertUser, createSession, getSession, deleteSession, listSources, getSource, createSource, updateSource, deleteSource, getUserBySlug, listDigestsByUser, countDigestsByUser, createPack, getPack, getPackBySlug, listPacks, incrementPackInstall, deletePack, listSubscriptions, subscribe, unsubscribe, bulkSubscribe, isSubscribed } from './db.mjs';
+import { getDb, listDigests, getDigest, createDigest, listMarks, createMark, deleteMark, getConfig, setConfig, upsertUser, createSession, getSession, deleteSession, listSources, getSource, createSource, updateSource, deleteSource, getSourceByTypeConfig, getUserBySlug, listDigestsByUser, countDigestsByUser, createPack, getPack, getPackBySlug, listPacks, incrementPackInstall, deletePack, listSubscriptions, subscribe, unsubscribe, bulkSubscribe, isSubscribed } from './db.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -481,7 +481,8 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'GET' && path === '/api/subscriptions') {
       if (!req.user) return json(res, { error: 'not authenticated' }, 401);
-      return json(res, listSubscriptions(db, req.user.id));
+      const subs = listSubscriptions(db, req.user.id);
+      return json(res, subs.map(s => ({ ...s, sourceDeleted: !!s.is_deleted })));
     }
 
     if (req.method === 'POST' && path === '/api/subscriptions') {
@@ -569,7 +570,7 @@ const server = createServer(async (req, res) => {
       const s = getSource(db, parseInt(sourceMatch[1]));
       if (!s) return json(res, { error: 'not found' }, 404);
       if (s.created_by !== req.user.id) return json(res, { error: 'forbidden' }, 403);
-      deleteSource(db, parseInt(sourceMatch[1]));
+      deleteSource(db, parseInt(sourceMatch[1]), req.user.id);
       return json(res, { ok: true });
     }
 
@@ -588,14 +589,17 @@ const server = createServer(async (req, res) => {
       const pack = getPackBySlug(db, packInstallMatch[1]);
       if (!pack) return json(res, { error: 'not found' }, 404);
       const sources = JSON.parse(pack.sources_json || '[]');
-      const allSources = listSources(db, {});
       let added = 0;
       for (const s of sources) {
         const configStr = typeof s.config === 'string' ? s.config : JSON.stringify(s.config);
-        // Check if source already exists (any user)
-        const existing = allSources.find(us => us.type === s.type && us.config === configStr);
+        // Check if source already exists (including deleted)
+        const existing = getSourceByTypeConfig(db, s.type, configStr);
         if (existing) {
-          // Source exists — just subscribe if not already
+          if (existing.is_deleted) {
+            // Soft-deleted → skip, don't resurrect
+            continue;
+          }
+          // Source exists and active — just subscribe if not already
           if (!isSubscribed(db, req.user.id, existing.id)) {
             subscribe(db, req.user.id, existing.id);
             added++;
@@ -651,6 +655,14 @@ const server = createServer(async (req, res) => {
         const changelog = readFileSync(join(__dirname, '..', 'CHANGELOG.md'), 'utf-8');
         return json(res, { content: changelog });
       } catch { return json(res, { content: '# Changelog\n\nNo changelog found.' }); }
+    }
+
+    // GET /api/roadmap
+    if (req.method === 'GET' && path === '/api/roadmap') {
+      try {
+        const roadmap = readFileSync(join(__dirname, '..', 'ROADMAP.md'), 'utf-8');
+        return json(res, { content: roadmap });
+      } catch { return json(res, { content: '# Roadmap\n\nNo roadmap found.' }); }
     }
 
     if (req.method === 'GET' && path === '/api/config') {
