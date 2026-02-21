@@ -79,7 +79,7 @@
     <h1 style="margin:0">☀️ AI Digest Dashboard</h1>
     <div class="auth-bar" id="authBar"></div>
   </div>
-  <p class="subtitle">Kevin's AI news digest — powered by Lisa · <a href="https://github.com/kevinho/ai-digest" target="_blank" style="color:#58a6ff;text-decoration:none;">GitHub ⭐</a></p>
+  <p class="subtitle">Kevin's AI news digest — powered by Lisa · <a href="https://github.com/kevinho/ai-digest" target="_blank" style="color:#58a6ff;text-decoration:none;">GitHub ⭐</a> · <span id="langToggle" onclick="setLang(lang==='zh'?'en':'zh')" style="color:#58a6ff;cursor:pointer;">EN</span></p>
   <div class="tabs">
     <div class="tab active" data-type="4h">4H 简报</div>
     <div class="tab" data-type="daily">日报</div>
@@ -94,7 +94,7 @@
       <span class="dismiss" onclick="dismissBanner()">✕</span>
     </span>
   </div>
-  <div id="list" class="digest-list"><div class="loading">Loading...</div></div>
+  <div id="list" class="digest-list"><div class="loading">⏳</div></div>
   <div id="viewer" class="digest-viewer"></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -103,6 +103,81 @@
 window.onerror = function(msg, src, line) {
   document.getElementById('list').innerHTML = '<div class="empty">JS Error: ' + msg + ' (line ' + line + ')</div>';
 };
+
+// ── i18n ──
+const I18N = {
+  zh: {
+    title: '☀️ AI Digest Dashboard',
+    subtitle: 'AI 新闻简报 — powered by Lisa',
+    tab4h: '4H 简报', tabDaily: '日报', tabWeekly: '周报', tabMonthly: '月报', tabMarks: '📌 Mark 收藏',
+    loginBanner: '💡 登录 Google 账号即可收藏文章、管理个人书签',
+    loginBtn: '登录', logout: '退出', signIn: 'Sign in with Google',
+    loading: '加载中...', noData: '暂无数据', loadMore: '加载更多', loadingMore: '加载中...',
+    loadFail: '加载失败', back: '← 返回列表', cantLoad: '无法加载',
+    today: '今天', yesterday: '昨天', articles: '篇',
+    weekLabel: (y, w) => `📅 ${y} 第 ${w} 周`,
+    monthLabel: (y, m) => `📅 ${y} 年 ${m} 月`,
+    yearLabel: (y) => `📅 ${y} 年`,
+    totalMarks: '总 Mark', deepDived: '已 Deep Dive', pending: '待处理',
+    byTopic: '🏷️ 按话题', byTime: '🕐 按时间',
+    noMarks: '暂无 Mark 记录', marksDone: '✅ 已解读', marksPending: '⏳ 待处理',
+    loginToMark: '🔐 登录后可收藏',
+    loginPromptTitle: '登录后可使用收藏功能',
+    loginPromptDesc: '收藏感兴趣的内容，随时回顾',
+    markSuccess: '📌 Mark 成功！', markDup: '已经 Mark 过了', markFail: '❌ Mark 失败',
+    marked: '✅ 已 Mark', mark: '📌 Mark',
+    items: '条', cannotLoadMarks: '无法加载 Marks 数据',
+    weekdays: ['周日','周一','周二','周三','周四','周五','周六'],
+  },
+  en: {
+    title: '☀️ AI Digest Dashboard',
+    subtitle: 'AI news digest — powered by Lisa',
+    tab4h: '4H Briefs', tabDaily: 'Daily', tabWeekly: 'Weekly', tabMonthly: 'Monthly', tabMarks: '📌 Marks',
+    loginBanner: '💡 Sign in with Google to bookmark articles and manage your reading list',
+    loginBtn: 'Login', logout: 'Logout', signIn: 'Sign in with Google',
+    loading: 'Loading...', noData: 'No data', loadMore: 'Load More', loadingMore: 'Loading...',
+    loadFail: 'Failed to load', back: '← Back', cantLoad: 'Cannot load',
+    today: 'Today', yesterday: 'Yesterday', articles: 'articles',
+    weekLabel: (y, w) => `📅 ${y} Week ${w}`,
+    monthLabel: (y, m) => `📅 ${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]} ${y}`,
+    yearLabel: (y) => `📅 ${y}`,
+    totalMarks: 'Total', deepDived: 'Deep Dived', pending: 'Pending',
+    byTopic: '🏷️ By Topic', byTime: '🕐 By Time',
+    noMarks: 'No marks yet', marksDone: '✅ Done', marksPending: '⏳ Pending',
+    loginToMark: '🔐 Sign in to bookmark',
+    loginPromptTitle: 'Sign in to use bookmarks',
+    loginPromptDesc: 'Save interesting content and revisit anytime',
+    markSuccess: '📌 Marked!', markDup: 'Already marked', markFail: '❌ Mark failed',
+    marked: '✅ Marked', mark: '📌 Mark',
+    items: 'items', cannotLoadMarks: 'Cannot load marks',
+    weekdays: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  }
+};
+
+let lang = localStorage.getItem('digest_lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+function t(key) { return I18N[lang]?.[key] ?? I18N.en[key] ?? key; }
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('digest_lang', l);
+  applyLang();
+  renderList();
+}
+
+function applyLang() {
+  document.querySelector('h1').textContent = t('title');
+  document.querySelector('.subtitle').childNodes[0].textContent = t('subtitle') + ' · ';
+  document.querySelector('[data-type="4h"]').textContent = t('tab4h');
+  document.querySelector('[data-type="daily"]').textContent = t('tabDaily');
+  document.querySelector('[data-type="weekly"]').textContent = t('tabWeekly');
+  document.querySelector('[data-type="monthly"]').textContent = t('tabMonthly');
+  document.querySelector('[data-type="marks"]').textContent = t('tabMarks');
+  const banner = document.getElementById('loginBanner');
+  if (banner) banner.querySelector('span').textContent = t('loginBanner');
+  const langToggle = document.getElementById('langToggle');
+  if (langToggle) langToggle.textContent = lang === 'zh' ? 'EN' : '中文';
+  renderAuthBar();
+}
 
 // API base — auto-detect: if served under /digest/, use /digest/api; otherwise /api
 const API = (() => {
@@ -130,9 +205,9 @@ function renderAuthBar() {
   if (currentUser) {
     bar.innerHTML = `<img src="${currentUser.avatar}" alt="">`
       + `<span class="user-name">${currentUser.name}</span>`
-      + `<a class="auth-btn" href="#" onclick="doLogout(); return false;">退出</a>`;
+      + `<a class="auth-btn" href="#" onclick="doLogout(); return false;">${t('logout')}</a>`;
   } else {
-    bar.innerHTML = `<a class="auth-btn" href="${API}/auth/google?origin=${encodeURIComponent(location.origin)}">Sign in with Google</a>`;
+    bar.innerHTML = `<a class="auth-btn" href="${API}/auth/google?origin=${encodeURIComponent(location.origin)}">${t('signIn')}</a>`;
   }
 }
 
@@ -165,7 +240,7 @@ async function doLogout() {
   }
 }
 
-const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
+function WEEKDAYS() { return t('weekdays'); }
 let currentType = '4h';
 let markedUrls = new Set();
 const PAGE_SIZE = 10;
@@ -223,25 +298,23 @@ function groupDigests(digests) {
 function formatGroupLabel(type, key) {
   if (type === '4h') {
     const d = new Date(key + 'T00:00:00+08:00');
-    const wd = WEEKDAYS[d.getDay()];
+    const wd = WEEKDAYS()[d.getDay()];
     const today = new Date(); today.setHours(0,0,0,0);
     const diff = Math.round((today - new Date(d.toDateString())) / 86400000);
-    if (diff === 0) return `📅 今天 · ${key} ${wd}`;
-    if (diff === 1) return `📅 昨天 · ${key} ${wd}`;
+    if (diff === 0) return `📅 ${t('today')} · ${key} ${wd}`;
+    if (diff === 1) return `📅 ${t('yesterday')} · ${key} ${wd}`;
     return `📅 ${key} ${wd}`;
   }
   if (type === 'daily') {
-    // key = "2026-W07"
     const [y, w] = key.split('-W');
-    return `📅 ${y} 第 ${parseInt(w)} 周`;
+    return t('weekLabel')(y, parseInt(w));
   }
   if (type === 'weekly') {
-    // key = "2026-02"
     const [y, m] = key.split('-');
-    return `📅 ${y} 年 ${parseInt(m)} 月`;
+    return t('monthLabel')(y, parseInt(m));
   }
   if (type === 'monthly') {
-    return `📅 ${key} 年`;
+    return t('yearLabel')(key);
   }
   return `📅 ${key}`;
 }
@@ -287,7 +360,7 @@ async function renderList(append = false) {
     currentOffset = 0;
     allLoaded = false;
     loadedDigests = [];
-    list.innerHTML = '<div class="loading">Loading...</div>';
+    list.innerHTML = `<div class="loading">${t('loading')}</div>`;
   }
 
   try {
@@ -297,14 +370,14 @@ async function renderList(append = false) {
     loadedDigests = loadedDigests.concat(digests);
     currentOffset += digests.length;
 
-    if (!loadedDigests.length) { list.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+    if (!loadedDigests.length) { list.innerHTML = `<div class="empty">${t('noData')}</div>`; return; }
 
     const { groups, order } = groupDigests(loadedDigests);
     let html = '';
     for (const gk of order) {
       const items = groups[gk];
       const label = formatGroupLabel(currentType, gk);
-      html += `<div class="date-group"><div class="date-group-header">${label} <span class="count">${items.length} 篇</span></div><div class="date-group-items">`;
+      html += `<div class="date-group"><div class="date-group-header">${label} <span class="count">${items.length} ${t('articles')}</span></div><div class="date-group-items">`;
       for (const d of items) {
         const dt = d._dt;
         const time = dt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -313,7 +386,7 @@ async function renderList(append = false) {
           title = `${time} SGT`; badge = `<span class="time-badge">${time}</span>`;
         } else if (currentType === 'daily') {
           const dateStr = dt.toISOString().slice(0, 10);
-          const wd = WEEKDAYS[dt.getDay()];
+          const wd = WEEKDAYS()[dt.getDay()];
           title = `${dateStr} ${wd}`; badge = '';
         } else if (currentType === 'weekly') {
           const wk = getWeekKey(dt);
@@ -328,20 +401,20 @@ async function renderList(append = false) {
       html += `</div></div>`;
     }
     if (!allLoaded) {
-      html += `<div id="load-more" style="text-align:center;padding:16px;"><button onclick="loadMore()" style="padding:10px 32px;background:#2a2a2a;border:1px solid #444;border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;transition:all .2s;">加载更多</button></div>`;
+      html += `<div id="load-more" style="text-align:center;padding:16px;"><button onclick="loadMore()" style="padding:10px 32px;background:#2a2a2a;border:1px solid #444;border-radius:8px;color:#aaa;cursor:pointer;font-size:14px;transition:all .2s;">${t('loadMore')}</button></div>`;
     }
     list.innerHTML = html;
     list.querySelectorAll('.digest-card').forEach(card => {
       card.onclick = () => loadDigest(card.dataset.id);
     });
   } catch (e) {
-    if (!append) list.innerHTML = `<div class="empty">加载失败: ${e.message}</div>`;
+    if (!append) list.innerHTML = `<div class="empty">${t('loadFail')}: ${e.message}</div>`;
   }
 }
 
 async function loadMore() {
   const btn = document.querySelector('#load-more button');
-  if (btn) { btn.textContent = '加载中...'; btn.disabled = true; }
+  if (btn) { btn.textContent = t('loadingMore'); btn.disabled = true; }
   await renderList(true);
 }
 
@@ -365,18 +438,18 @@ async function loadDigest(id) {
       const isMarked = markedUrls.has(clean);
       let markHtml;
       if (currentUser) {
-        markHtml = `<span class="mark-btn ${isMarked ? 'marked' : ''}" onclick="doMark('${clean}', this)">${isMarked ? '✅ 已 Mark' : '📌 Mark'}</span>`;
+        markHtml = `<span class="mark-btn ${isMarked ? 'marked' : ''}" onclick="doMark('${clean}', this)">${isMarked ? t('marked') : t('mark')}</span>`;
       } else {
-        markHtml = `<span class="mark-btn disabled" onclick="showToast('🔐 登录后可收藏')" title="登录后可收藏">📌 Mark</span>`;
+        markHtml = `<span class="mark-btn disabled" onclick="showToast('${t('loginToMark')}')" title="${t('loginToMark')}">${t('mark')}</span>`;
       }
       return `<a href="${match}" target="_blank">${match}</a>${markHtml}`;
     });
     text = text.replace(/(https?:\/\/(?!x\.com)[^\s<)]+)/g, '<a href="$1" target="_blank">$1</a>');
 
-    viewer.innerHTML = `<div class="back-btn" onclick="renderList()">← 返回列表</div>\n${text}`;
+    viewer.innerHTML = `<div class="back-btn" onclick="renderList()">${t('back')}</div>\n${text}`;
     viewer.style.display = 'block';
   } catch (e) {
-    viewer.innerHTML = `<div class="back-btn" onclick="renderList()">← 返回列表</div>\n<div class="empty">无法加载</div>`;
+    viewer.innerHTML = `<div class="back-btn" onclick="renderList()">${t('back')}</div>\n<div class="empty">${t('cantLoad')}</div>`;
     viewer.style.display = 'block';
   }
 }
@@ -392,12 +465,12 @@ async function renderMarks() {
   if (!currentUser) {
     list.innerHTML = `<div class="login-prompt">
       <div class="icon">🔐</div>
-      <div class="msg">登录后可使用收藏功能<br>收藏感兴趣的内容，随时回顾</div>
-      <a class="auth-btn" href="${API}/auth/google?origin=${encodeURIComponent(location.origin)}">Sign in with Google</a>
+      <div class="msg">${t('loginPromptTitle')}<br>${t('loginPromptDesc')}</div>
+      <a class="auth-btn" href="${API}/auth/google?origin=${encodeURIComponent(location.origin)}">${t('signIn')}</a>
     </div>`;
     return;
   }
-  list.innerHTML = '<div class="loading">Loading marks...</div>';
+  list.innerHTML = `<div class="loading">${t('loading')}</div>`;
   try {
     const resp = await fetch(`${API}/marks`, { credentials: 'same-origin' });
     const marks = await resp.json();
@@ -405,19 +478,19 @@ async function renderMarks() {
     const processed = marks.filter(m => m.status === 'processed');
 
     let html = `<div class="mark-stats">
-      <div class="mark-stat"><div class="num">${marks.length}</div><div class="label">总 Mark</div></div>
-      <div class="mark-stat"><div class="num">${processed.length}</div><div class="label">已 Deep Dive</div></div>
-      <div class="mark-stat"><div class="num" style="color:#f0b040">${pending.length}</div><div class="label">待处理</div></div>
+      <div class="mark-stat"><div class="num">${marks.length}</div><div class="label">${t('totalMarks')}</div></div>
+      <div class="mark-stat"><div class="num">${processed.length}</div><div class="label">${t('deepDived')}</div></div>
+      <div class="mark-stat"><div class="num" style="color:#f0b040">${pending.length}</div><div class="label">${t('pending')}</div></div>
     </div>`;
 
     // View toggle
     html += `<div style="display:flex;gap:8px;margin-bottom:16px;">
-      <div class="tab ${markViewMode==='topic'?'active':''}" onclick="markViewMode='topic';renderMarks()">🏷️ 按话题</div>
-      <div class="tab ${markViewMode==='time'?'active':''}" onclick="markViewMode='time';renderMarks()">🕐 按时间</div>
+      <div class="tab ${markViewMode==='topic'?'active':''}" onclick="markViewMode='topic';renderMarks()">${t('byTopic')}</div>
+      <div class="tab ${markViewMode==='time'?'active':''}" onclick="markViewMode='time';renderMarks()">${t('byTime')}</div>
     </div>`;
 
     if (!marks.length) {
-      html += '<div class="empty">暂无 Mark 记录</div>';
+      html += `<div class="empty">${t('noMarks')}</div>`;
     } else if (markViewMode === 'topic') {
       // Group by topic
       const topicGroups = {};
@@ -429,7 +502,7 @@ async function renderMarks() {
       // Sort topics by count desc
       const sortedTopics = Object.entries(topicGroups).sort((a,b) => b[1].length - a[1].length);
       for (const [topic, items] of sortedTopics) {
-        html += `<div class="date-group"><div class="date-group-header">${topic} <span class="count">${items.length} 条</span></div><div class="date-group-items">`;
+        html += `<div class="date-group"><div class="date-group-header">${topic} <span class="count">${items.length} ${t('items')}</span></div><div class="date-group-items">`;
         for (const m of items) html += renderMarkCard(m);
         html += `</div></div>`;
       }
@@ -444,14 +517,14 @@ async function renderMarks() {
       }
       for (const key of dateOrder) {
         const items = dateGroups[key];
-        html += `<div class="date-group"><div class="date-group-header">📅 ${key} <span class="count">${items.length} 条</span></div><div class="date-group-items">`;
+        html += `<div class="date-group"><div class="date-group-header">📅 ${key} <span class="count">${items.length} ${t('items')}</span></div><div class="date-group-items">`;
         for (const m of items) html += renderMarkCard(m);
         html += `</div></div>`;
       }
     }
     list.innerHTML = html;
   } catch (e) {
-    list.innerHTML = '<div class="empty">无法加载 Marks 数据</div>';
+    list.innerHTML = `<div class="empty">${t('cannotLoadMarks')}</div>`;
   }
 }
 
@@ -464,7 +537,7 @@ function renderMarkCard(m) {
   return `<div class="mark-card">
     <div class="mark-meta">
       <span class="mark-author">@${author}</span>
-      <span class="mark-status ${isDone ? 'done' : 'pending'}">${isDone ? '✅ 已解读' : '⏳ 待处理'}</span>
+      <span class="mark-status ${isDone ? 'done' : 'pending'}">${isDone ? t('marksDone') : t('marksPending')}</span>
     </div>
     ${summary ? `<div style="font-size:13px;color:#bbb;margin:6px 0;line-height:1.5;">${summary}</div>` : ''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
@@ -501,12 +574,12 @@ async function doMark(url, btn) {
     const d = await r.json();
     if (d.ok) {
       markedUrls.add(url);
-      btn.textContent = '✅ 已 Mark';
+      btn.textContent = t('marked');
       btn.classList.add('marked');
       btn.onclick = null;
-      showToast(d.duplicate ? '已经 Mark 过了' : '📌 Mark 成功！');
+      showToast(d.duplicate ? t('markDup') : t('markSuccess'));
     }
-  } catch (e) { showToast('❌ Mark 失败: ' + e.message); }
+  } catch (e) { showToast(t('markFail') + ': ' + e.message); }
 }
 
 // Tab switching
@@ -530,6 +603,7 @@ if (location.hash) {
   }
 }
 
+applyLang();
 checkAuth().then(() => renderList());
 </script>
 </body>
