@@ -656,7 +656,7 @@ async function renderSources() {
           <div class="source-header">
             <span class="source-name">${icon} ${s.name}${s.is_public ? ' <span style="font-size:11px;color:#666;font-weight:400;">🌐</span>' : ''}</span>
             <div class="source-actions">
-              ${(isAdmin || (currentUser && s.created_by === currentUser.id)) ? `<label class="toggle-switch" title="Active"><input type="checkbox" ${s.is_active ? 'checked' : ''} onchange="toggleSource(${s.id}, this.checked)"><span class="toggle-slider"></span></label>
+              ${(currentUser && s.created_by === currentUser.id) ? `<label class="toggle-switch" title="Active"><input type="checkbox" ${s.is_active ? 'checked' : ''} onchange="toggleSource(${s.id}, this.checked)"><span class="toggle-slider"></span></label>
               <button onclick="editSourceForm(${s.id})">${t('editSource')}</button>
               <button class="danger" onclick="delSource(${s.id})">${t('deleteSource')}</button>` : ''}
             </div>

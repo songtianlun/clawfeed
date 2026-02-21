@@ -318,7 +318,7 @@ const server = createServer(async (req, res) => {
       if (!req.user) return json(res, { error: 'login required' }, 401);
       const s = getSource(db, parseInt(sourceMatch[1]));
       if (!s) return json(res, { error: 'not found' }, 404);
-      if (!req.user.is_admin && s.created_by !== req.user.id) return json(res, { error: 'forbidden' }, 403);
+      if (s.created_by !== req.user.id) return json(res, { error: 'forbidden' }, 403);
       const body = await parseBody(req);
       updateSource(db, parseInt(sourceMatch[1]), body);
       return json(res, { ok: true });
@@ -328,7 +328,7 @@ const server = createServer(async (req, res) => {
       if (!req.user) return json(res, { error: 'login required' }, 401);
       const s = getSource(db, parseInt(sourceMatch[1]));
       if (!s) return json(res, { error: 'not found' }, 404);
-      if (!req.user.is_admin && s.created_by !== req.user.id) return json(res, { error: 'forbidden' }, 403);
+      if (s.created_by !== req.user.id) return json(res, { error: 'forbidden' }, 403);
       deleteSource(db, parseInt(sourceMatch[1]));
       return json(res, { ok: true });
     }
