@@ -649,19 +649,23 @@ const server = createServer(async (req, res) => {
 
     // ── Config endpoints ──
 
-    // GET /api/changelog
+    // GET /api/changelog?lang=zh|en
     if (req.method === 'GET' && path === '/api/changelog') {
+      const l = params.get('lang') || 'en';
+      const suffix = l === 'zh' ? '.zh.md' : '.md';
       try {
-        const changelog = readFileSync(join(__dirname, '..', 'CHANGELOG.md'), 'utf-8');
-        return json(res, { content: changelog });
+        const content = readFileSync(join(__dirname, '..', `CHANGELOG${suffix}`), 'utf-8');
+        return json(res, { content });
       } catch { return json(res, { content: '# Changelog\n\nNo changelog found.' }); }
     }
 
-    // GET /api/roadmap
+    // GET /api/roadmap?lang=zh|en
     if (req.method === 'GET' && path === '/api/roadmap') {
+      const l = params.get('lang') || 'en';
+      const suffix = l === 'zh' ? '.zh.md' : l === 'en' ? '.en.md' : '.md';
       try {
-        const roadmap = readFileSync(join(__dirname, '..', 'ROADMAP.md'), 'utf-8');
-        return json(res, { content: roadmap });
+        const content = readFileSync(join(__dirname, '..', `ROADMAP${suffix}`), 'utf-8');
+        return json(res, { content });
       } catch { return json(res, { content: '# Roadmap\n\nNo roadmap found.' }); }
     }
 

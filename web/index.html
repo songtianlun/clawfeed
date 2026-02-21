@@ -346,7 +346,7 @@ async function showChangelog() {
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
   try {
-    const r = await fetch(`${API}/changelog`);
+    const r = await fetch(`${API}/changelog?lang=${lang}`);
     const d = await r.json();
     content.innerHTML = parseChangelogMd(d.content);
   } catch { content.innerHTML = '<p>Failed to load changelog.</p>'; }
@@ -362,7 +362,7 @@ async function showRoadmap() {
   document.body.style.overflow = 'hidden';
   content.innerHTML = '<p>Loading...</p>';
   try {
-    const r = await fetch(`${API}/roadmap`);
+    const r = await fetch(`${API}/roadmap?lang=${lang}`);
     const d = await r.json();
     content.innerHTML = parseChangelogMd(d.content);
   } catch { content.innerHTML = '<p>Failed to load roadmap.</p>'; }

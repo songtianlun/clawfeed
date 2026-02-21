@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.0 — 2026-02-22
+### ✨ New
+- **Soft Delete Sources** — Sources marked `is_deleted` instead of hard delete; prevents pack zombie resurrection
+- **Roadmap page** — Accessible from ⋯ More menu
+- **Test documentation** — Full test case index with iteration log
+
+### 🔧 Fixed
+- Pack install skips deleted sources (no more zombie duplicates)
+- Subscription list shows deactivated sources (greyed out + ⚠️ badge)
+
 ## v0.5.0 — 2026-02-21
 ### ✨ New
 - **Digest Feed System** — Each user gets a subscribable feed (`/feed/:slug.json`, `/feed/:slug.rss`, `/feed/:slug`)
