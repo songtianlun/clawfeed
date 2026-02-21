@@ -296,17 +296,19 @@ function getWeekKey(dt) {
 
 function groupDigests(digests) {
   const groups = {}; const order = [];
+  function localDateStr(dt) { return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
+  function localMonthStr(dt) { return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`; }
   for (const d of digests) {
     const dt = parseCreatedAt(d);
     let key;
     if (currentType === '4h') {
-      key = dt.toISOString().slice(0, 10); // by day
+      key = localDateStr(dt); // by local day
     } else if (currentType === 'daily') {
       key = getWeekKey(dt); // by week
     } else if (currentType === 'weekly') {
-      key = dt.toISOString().slice(0, 7); // by month (YYYY-MM)
+      key = localMonthStr(dt); // by local month
     } else {
-      key = dt.toISOString().slice(0, 4); // by year
+      key = String(dt.getFullYear()); // by local year
     }
     if (!groups[key]) { groups[key] = []; order.push(key); }
     groups[key].push({ ...d, _dt: dt });
