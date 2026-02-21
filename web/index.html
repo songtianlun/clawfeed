@@ -83,7 +83,7 @@
 <body>
 <div class="container">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;">
-    <h1 style="margin:0">☀️ AI Digest Dashboard</h1>
+    <h1 style="margin:0;cursor:pointer" onclick="currentType='4h';document.querySelector('.tab.active')?.classList.remove('active');document.querySelector('[data-type=\\'4h\\']').classList.add('active');currentOffset=0;allLoaded=false;renderList();location.hash='4h'">☀️ AI Digest Dashboard</h1>
     <div class="auth-bar" id="authBar"></div>
   </div>
   <p class="subtitle"><span id="subtitleText">Kevin's AI news digest — powered by Lisa</span></p>
