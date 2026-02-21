@@ -1,5 +1,32 @@
 # AI Digest — Test Suite
 
+## Index
+
+| Section | Category | Tests | Status |
+|---------|----------|-------|--------|
+| [1](#1-authentication-6-tests) | Authentication | 6 | ✅ |
+| [2](#2-digest-browsing--public-3-tests) | Digest Browsing (public) | 3 | ✅ |
+| [3](#3-sources--crud--visibility-6-tests) | Sources CRUD + Visibility | 6 | ✅ |
+| [4](#4-source-ownership-3-tests) | Source Ownership | 3 | ✅ |
+| [5](#5-packs--create--share-4-tests) | Packs Create + Share | 4 | ✅ |
+| [6](#6-pack-install--fresh-user-4-tests) | Pack Install (fresh user) | 4 | ✅ |
+| [7](#7-pack-dedup-2-tests) | Pack Dedup | 2 | ✅ |
+| [8](#8-cross-install-with-overlap-1-test) | Cross-Install Overlap | 1 | ✅ |
+| [9](#9-subscription-management-2-tests) | Subscription Management | 2 | ✅ |
+| [10](#10-marks--crud--isolation-7-tests) | Marks CRUD + Isolation | 7 | ✅ |
+| [11](#11-data-isolation-2-tests) | Data Isolation | 2 | ✅ |
+| [12](#12-feed-output-4-tests) | Feed Output | 4 | ✅ |
+| [13](#13-api-security-5-tests) | API Security | 5 | ✅ |
+| [14](#14-edge-cases-3-tests) | Edge Cases | 3+ | ✅ |
+| [15](#15-source-deletion--subscriber-impact-2-tests) | Source Deletion Cascade | 2 | ✅ |
+| [16](#16-soft-delete-sources-planned) | Soft Delete Sources | 7 | 🔜 |
+| [17](#17-source-dedup-at-scale-planned) | Source Dedup at Scale | 5 | 🔜 |
+| [18](#18-subscription-volume-planned) | Subscription Volume | 3 | 🔜 |
+
+**Total: 52 active ✅ + 15 planned 🔜 = 67**
+
+---
+
 ## Quick Start
 
 ```bash
