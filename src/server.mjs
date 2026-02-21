@@ -236,6 +236,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && path === '/api/digests') {
+      if (!req.user || !req.user.is_admin) return json(res, { error: 'admin required' }, 403);
       const body = await parseBody(req);
       const result = createDigest(db, body);
       return json(res, result, 201);
@@ -291,6 +292,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === 'PUT' && path === '/api/config') {
+      if (!req.user || !req.user.is_admin) return json(res, { error: 'admin required' }, 403);
       const body = await parseBody(req);
       for (const [k, v] of Object.entries(body)) setConfig(db, k, v);
       return json(res, { ok: true });
