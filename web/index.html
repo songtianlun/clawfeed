@@ -490,6 +490,8 @@ async function renderList(append = false) {
   }
 }
 
+// (smart add is rendered inside renderSources)
+
 async function loadMore() {
   const btn = document.querySelector('#load-more button');
   if (btn) { btn.textContent = t('loadingMore'); btn.disabled = true; }
@@ -677,10 +679,90 @@ async function renderSources() {
       html += '</div>';
     }
     list.innerHTML = html;
+    renderSmartAdd();
     if (showSourceForm) renderSourceForm();
   } catch (e) {
     list.innerHTML = `<div class="empty">Failed: ${e.message}</div>`;
   }
+}
+
+let resolvedSource = null;
+let smartAddState = 'input'; // 'input' | 'loading' | 'preview' | 'error'
+let smartAddError = '';
+
+function renderSmartAdd() {
+  const container = document.getElementById('smartAddContainer');
+  if (!container) return;
+
+  let html = `<div class="source-form" style="margin-bottom:16px;">`;
+  html += `<div style="font-size:13px;color:#888;margin-bottom:10px;">${t('pasteUrl')}</div>`;
+  html += `<div style="display:flex;gap:8px;">
+    <input id="smart_url" type="url" placeholder="${t('urlPlaceholder')}" style="flex:1;padding:8px 12px;background:#0f0f0f;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-size:13px;" value="${document.getElementById('smart_url')?.value || ''}" onkeydown="if(event.key==='Enter')detectSource()">
+    <button onclick="detectSource()" id="detectBtn" style="padding:8px 18px;background:#1a3a1a;border:1px solid #40c040;border-radius:8px;color:#40c040;cursor:pointer;font-size:13px;white-space:nowrap;transition:all .2s;" ${smartAddState==='loading'?'disabled':''}>${smartAddState==='loading' ? t('detecting') : t('detect')}</button>
+  </div>`;
+
+  if (smartAddState === 'preview' && resolvedSource) {
+    html += `<div style="margin-top:14px;padding:14px;background:#0f0f0f;border:1px solid #333;border-radius:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:18px;">${resolvedSource.icon || '📦'}</span>
+        <span style="font-size:12px;color:#888;background:#1a1a1a;padding:2px 8px;border-radius:4px;border:1px solid #282828;">${resolvedSource.type}</span>
+      </div>
+      <div style="margin-bottom:8px;">
+        <span id="resolvedName" style="font-size:15px;font-weight:600;cursor:pointer;border-bottom:1px dashed #555;" onclick="this.contentEditable=true;this.focus();this.style.borderBottom='1px solid #40c040'" onblur="this.contentEditable=false;this.style.borderBottom='1px dashed #555';resolvedSource.name=this.textContent.trim()">${resolvedSource.name}</span>
+      </div>
+      <div style="font-size:12px;color:#555;margin-bottom:12px;word-break:break-all;">${document.getElementById('smart_url')?.value || ''}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;cursor:pointer;">
+          <input type="checkbox" id="smart_public" style="width:14px;height:14px;"> ${t('publicSource')}
+        </label>
+        <div style="display:flex;gap:8px;">
+          <button onclick="confirmSmartAdd()" style="padding:8px 18px;background:#1a3a1a;border:1px solid #40c040;border-radius:8px;color:#40c040;cursor:pointer;font-size:13px;">✓ ${t('confirmAdd')}</button>
+          <button onclick="smartAddState='input';resolvedSource=null;renderSmartAdd()" style="padding:8px 18px;background:#2a2a2a;border:1px solid #444;border-radius:8px;color:#aaa;cursor:pointer;font-size:13px;">${t('cancel')}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if (smartAddState === 'error') {
+    html += `<div style="margin-top:10px;font-size:12px;color:#f04040;">${t('cannotDetect')}<a href="#" onclick="event.preventDefault();toggleSourceForm()" style="color:#58a6ff;">${t('manualAdd')} ›</a></div>`;
+  } else {
+    html += `<div style="margin-top:8px;"><a href="#" onclick="event.preventDefault();toggleSourceForm()" style="font-size:12px;color:#555;text-decoration:none;">${t('manualAdd')} ›</a></div>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+async function detectSource() {
+  const input = document.getElementById('smart_url');
+  const url = (input?.value || '').trim();
+  if (!url) return;
+  smartAddState = 'loading';
+  resolvedSource = null;
+  renderSmartAdd();
+  try {
+    const r = await fetch(`${API}/sources/resolve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ url }) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'failed');
+    resolvedSource = data;
+    smartAddState = 'preview';
+  } catch (e) {
+    smartAddState = 'error';
+    smartAddError = e.message;
+  }
+  renderSmartAdd();
+}
+
+async function confirmSmartAdd() {
+  if (!resolvedSource) return;
+  const isPublic = document.getElementById('smart_public')?.checked || false;
+  try {
+    await fetch(`${API}/sources`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+      body: JSON.stringify({ name: resolvedSource.name, type: resolvedSource.type, config: JSON.stringify(resolvedSource.config), isPublic }) });
+    showToast(t('sourceCreated'));
+    smartAddState = 'input'; resolvedSource = null;
+    renderSources();
+  } catch (e) { showToast('Error: ' + e.message); }
 }
 
 function toggleSourceForm() {
