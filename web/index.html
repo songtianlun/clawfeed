@@ -79,7 +79,7 @@
     <h1 style="margin:0">☀️ AI Digest Dashboard</h1>
     <div class="auth-bar" id="authBar"></div>
   </div>
-  <p class="subtitle">Kevin's AI news digest — powered by Lisa · <a href="https://github.com/kevinho/ai-digest" target="_blank" style="color:#58a6ff;text-decoration:none;">GitHub ⭐</a> · <span id="langToggle" onclick="setLang(lang==='zh'?'en':'zh')" style="color:#58a6ff;cursor:pointer;">EN</span></p>
+  <p class="subtitle"><span id="subtitleText">Kevin's AI news digest — powered by Lisa</span> · <a href="https://github.com/kevinho/ai-digest" target="_blank" style="color:#58a6ff;text-decoration:none;">GitHub ⭐</a> · <span id="langToggle" style="color:#58a6ff;cursor:pointer;padding:2px 6px;border:1px solid #333;border-radius:4px;font-size:12px;">EN</span></p>
   <div class="tabs">
     <div class="tab active" data-type="4h">4H 简报</div>
     <div class="tab" data-type="daily">日报</div>
@@ -166,7 +166,7 @@ function setLang(l) {
 
 function applyLang() {
   document.querySelector('h1').textContent = t('title');
-  document.querySelector('.subtitle').childNodes[0].textContent = t('subtitle') + ' · ';
+  document.getElementById('subtitleText').textContent = t('subtitle');
   document.querySelector('[data-type="4h"]').textContent = t('tab4h');
   document.querySelector('[data-type="daily"]').textContent = t('tabDaily');
   document.querySelector('[data-type="weekly"]').textContent = t('tabWeekly');
@@ -603,6 +603,11 @@ if (location.hash) {
   }
 }
 
+document.getElementById('langToggle').addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  setLang(lang === 'zh' ? 'en' : 'zh');
+});
 applyLang();
 checkAuth().then(() => renderList());
 </script>
