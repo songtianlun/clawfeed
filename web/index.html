@@ -204,6 +204,13 @@ const I18N = {
     sourceName: '名称', sourceType: '类型', sourceConfig: '配置 (JSON)', sourcePublic: '公开',
     save: '保存', cancel: '取消',
     noSources: '暂无数据源', confirmDelete: '确定删除此数据源？',
+    emptySourcesTitle: '📡 开始构建你的信息源',
+    emptySourcesDesc: '还没有添加信息源。你可以：',
+    emptySourcesPackHint: '📦 或一键安装推荐源包',
+    emptyMarksTitle: '📌 你的收藏夹',
+    emptyMarksDesc: '浏览简报时点击 "Mark" 按钮收藏感兴趣的文章。\n收藏的内容会出现在这里。',
+    welcomeToast: '🎉 欢迎！点击 📡 管理你的信息源',
+    sharePack2: '🔗 分享',
     lastFetched: '上次抓取', fetchCount: '抓取次数', never: '从未',
     sourceCreated: '✅ 数据源已创建', sourceUpdated: '✅ 已更新', sourceDeleted: '✅ 已删除',
     pasteUrl: '🔗 粘贴 URL 添加信息源', detect: '识别', detecting: '识别中...', detected: '识别成功', previewRecent: '最近内容',
@@ -249,6 +256,13 @@ const I18N = {
     sourceName: 'Name', sourceType: 'Type', sourceConfig: 'Config (JSON)', sourcePublic: 'Public',
     save: 'Save', cancel: 'Cancel',
     noSources: 'No sources yet', confirmDelete: 'Delete this source?',
+    emptySourcesTitle: '📡 Build Your Feed',
+    emptySourcesDesc: 'No sources added yet. You can:',
+    emptySourcesPackHint: '📦 Or install a recommended pack',
+    emptyMarksTitle: '📌 Your Bookmarks',
+    emptyMarksDesc: 'Click the "Mark" button while browsing digests to save interesting articles.\nSaved items will appear here.',
+    welcomeToast: '🎉 Welcome! Click 📡 to manage your sources',
+    sharePack2: '🔗 Share',
     lastFetched: 'Last fetched', fetchCount: 'Fetches', never: 'Never',
     sourceCreated: '✅ Source created', sourceUpdated: '✅ Updated', sourceDeleted: '✅ Deleted',
     pasteUrl: '🔗 Paste URL to add source', detect: 'Detect', detecting: 'Detecting...', detected: 'Detected', previewRecent: 'Recent items',
@@ -358,6 +372,11 @@ async function checkAuth() {
   renderAuthBar();
   updateMarkVisibility();
   if (currentUser && currentType === 'marks') renderMarks();
+  // Welcome toast for first-time login
+  if (currentUser && !localStorage.getItem('digest_welcomed')) {
+    localStorage.setItem('digest_welcomed', '1');
+    setTimeout(() => showToast(t('welcomeToast')), 500);
+  }
 }
 
 function ghLangHtml() {
@@ -686,7 +705,11 @@ async function renderMarks() {
     </div>`;
 
     if (!marks.length) {
-      html += `<div class="empty">${t('noMarks')}</div>`;
+      html += `<div style="text-align:center;padding:50px 20px;">
+        <div style="font-size:36px;margin-bottom:12px;">📌</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:10px;">${t('emptyMarksTitle')}</div>
+        <div style="color:#888;font-size:14px;line-height:1.7;white-space:pre-line;">${t('emptyMarksDesc')}</div>
+      </div>`;
     } else if (markViewMode === 'topic') {
       // Group by topic
       const topicGroups = {};
@@ -771,7 +794,53 @@ async function renderSources() {
 
     // ── Source list ──
     if (!sources.length) {
-      html += `<div class="empty" style="padding:30px 0;">${t('noSources')}</div>`;
+      // Empty state onboarding — smart add + packs integrated
+      html += `<div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:28px;margin-bottom:12px;">📡</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px;">${t('emptySourcesTitle')}</div>
+        <div style="color:#888;font-size:14px;margin-bottom:24px;">${t('emptySourcesDesc')}</div>
+      </div>`;
+      // Inline smart add
+      html += `<div id="smartAddContainer"></div>`;
+      html += `<div id="sourceFormContainer"></div>`;
+      // Packs section
+      html += `<div style="margin-top:24px;padding-top:20px;border-top:1px solid #222;">
+        <div style="font-size:15px;font-weight:600;margin-bottom:12px;">${t('emptySourcesPackHint')}</div>
+        <div id="emptyPacksList"><div class="loading">${t('loading')}</div></div>
+      </div>`;
+      list.innerHTML = html;
+      renderSmartAdd();
+      // Load public packs inline
+      fetch(`${API}/packs`, { credentials: 'same-origin' }).then(r => r.json()).then(packs => {
+        const container = document.getElementById('emptyPacksList');
+        if (!container) return;
+        if (!packs.length) { container.innerHTML = `<div style="color:#555;font-size:13px;">${t('noPacks')}</div>`; return; }
+        container.innerHTML = '<div class="digest-list" style="gap:8px;">' + packs.map(p => {
+          const sources = p.sources || [];
+          return `<div class="pack-card">
+            <div class="pack-header">
+              <div style="flex:1;">
+                <div class="pack-name">📦 ${esc(p.name)}</div>
+                ${p.description ? `<div class="pack-desc">${esc(p.description)}</div>` : ''}
+                <div class="pack-sources-list">
+                  ${sources.slice(0, 6).map(s => `<span class="pack-source-tag">${SOURCE_ICONS[s.type] || '📦'} ${esc(s.name)}</span>`).join('')}
+                  ${sources.length > 6 ? `<span class="pack-source-tag">+${sources.length - 6}</span>` : ''}
+                </div>
+                <div class="pack-meta">
+                  ${p.creator_avatar ? `<img src="${p.creator_avatar}" alt="">` : ''}
+                  <span>${p.creator_name || 'Anonymous'}</span>
+                  <span>·</span>
+                  <span>${sources.length} ${t('packSources')}</span>
+                </div>
+              </div>
+              <div class="pack-actions">
+                <button class="pack-install-btn" onclick="installPack('${p.slug}', this)">${t('installPack')}</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('') + '</div>';
+      }).catch(() => {});
+      return;
     } else {
       html += '<div class="digest-list" style="gap:8px;">';
       for (const s of sources) {
@@ -1097,7 +1166,7 @@ async function renderPacksSection() {
             </div>
             <div class="pack-actions">
               ${currentUser && p.created_by === currentUser.id
-                ? `<button class="pack-install-btn" style="background:#1a1a2e;border-color:#6cf;color:#6cf;" onclick="navigator.clipboard.writeText(location.origin+'/pack/${p.slug}');showToast('${lang==='zh'?'链接已复制':'Link copied'}')">${lang==='zh'?'复制链接':'Copy Link'}</button>
+                ? `<button class="pack-install-btn" style="background:#1a1a2e;border-color:#6cf;color:#6cf;" onclick="navigator.clipboard.writeText(location.origin+'/pack/${p.slug}');showToast('${lang==='zh'?'链接已复制':'Link copied'}')">${t('sharePack2')}</button>
                    <button class="pack-delete-btn" onclick="delPack(${p.id})">${t('deletePack')}</button>`
                 : currentUser
                   ? `<button class="pack-install-btn" onclick="installPack('${p.slug}', this)">${t('installPack')}</button>`
