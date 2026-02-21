@@ -1,5 +1,7 @@
 # AI Digest
 
+> **Live Demo**: [digest.kevinhe.io](https://digest.kevinhe.io)
+
 ![Dashboard](docs/screenshot.png)
 
 AI-powered news digest tool that generates structured summaries from Twitter/RSS feeds. Works as a standalone service or as an [OpenClaw](https://github.com/openclaw/openclaw) / [Zylos](https://github.com/zylos-ai) skill.
