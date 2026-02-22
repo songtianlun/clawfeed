@@ -246,7 +246,7 @@ const server = createServer(async (req, res) => {
     const since = params.get('since') || undefined;
     const digests = listDigestsByUser(db, user.id, { type, limit, since });
     const total = countDigestsByUser(db, user.id, { type });
-    const BASE = 'https://digest.kevinhe.io';
+    const BASE = 'https://clawfeed.kevinhe.io';
 
     if (format === 'json') {
       // JSON Feed 1.1
