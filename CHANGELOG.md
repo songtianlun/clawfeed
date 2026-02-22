@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.0 — 2026-02-22
+### ✨ New
+- **Dark/Light mode toggle** — Sun/moon toggle in header, persists in localStorage
+- **Video demo in README** — Uploaded demo.mp4 as GitHub release asset for proper embedding
+
+### 🔧 Fixed
+- README video now auto-plays on GitHub (release asset URL instead of relative path)
+
 ## v0.6.0 — 2026-02-22
 ### ✨ New
 - **Soft Delete Sources** — Sources marked `is_deleted` instead of hard delete; prevents pack zombie resurrection

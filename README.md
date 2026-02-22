@@ -4,9 +4,9 @@
 
 <div align="center">
 
-https://github.com/user-attachments/assets/demo.mp4
+https://github.com/kevinho/clawfeed/releases/download/v0.2.0/demo.mp4
 
-[▶ Watch Demo (30s)](docs/demo.mp4) · [Live Demo](https://clawfeed.kevinhe.io)
+[Live Demo](https://clawfeed.kevinhe.io)
 
 </div>
 

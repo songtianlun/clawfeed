@@ -8,7 +8,48 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { overflow-x: hidden; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; word-break: break-word; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; word-break: break-word; transition: background .3s, color .3s; }
+  body.light { background: #f5f5f5; color: #1a1a1a; }
+  body.light .subtitle { color: #888; }
+  body.light .tab { background: #e8e8e8; border-color: #ccc; color: #666; }
+  body.light .tab:hover { border-color: #999; color: #333; }
+  body.light .tab.active { background: #ddd; border-color: #999; color: #111; }
+  body.light .digest-card { background: #fff; border-color: #ddd; }
+  body.light .digest-card:hover { background: #fafafa; border-color: #bbb; }
+  body.light .digest-card .excerpt { color: #888; }
+  body.light .digest-card .time-badge { background: #f0f0f0; border-color: #ddd; color: #666; }
+  body.light .date-group-header { color: #888; border-color: #e0e0e0; }
+  body.light .date-group-header .count { color: #aaa; }
+  body.light .digest-viewer { background: #fff; border-color: #ddd; color: #333; }
+  body.light .back-btn { background: #e8e8e8; border-color: #ccc; color: #666; }
+  body.light .back-btn:hover { color: #111; border-color: #999; }
+  body.light .login-banner { background: #fff; border-color: #ddd; color: #666; }
+  body.light .mark-card { background: #fff; border-color: #ddd; }
+  body.light .mark-card:hover { background: #fafafa; border-color: #bbb; }
+  body.light .source-card { background: #fff; border-color: #ddd; }
+  body.light .source-card:hover { background: #fafafa; border-color: #bbb; }
+  body.light .source-form { background: #fff; border-color: #ddd; }
+  body.light .source-form input, body.light .source-form select, body.light .source-form textarea { background: #f5f5f5; border-color: #ccc; color: #333; }
+  body.light .auth-btn { background: #e8e8e8; border-color: #ccc; color: #555; }
+  body.light .auth-btn:hover { border-color: #999; color: #111; }
+  body.light .mark-stat { background: #fff; border-color: #ddd; }
+  body.light .toast { background: #333; }
+  body.light .changelog-overlay { background: rgba(255,255,255,0.92); }
+  body.light .changelog-inner { color: #333; }
+  body.light .changelog-inner h1 { color: #111; }
+  body.light .changelog-inner h2 { color: #0066cc; border-color: #ddd; }
+  body.light .changelog-inner h3 { color: #444; }
+  body.light .changelog-inner li { color: #555; }
+  body.light .changelog-inner code { background: #e8f0fe; color: #0066cc; }
+  body.light .user-dropdown { background: #fff; border-color: #ddd; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+  body.light .user-dropdown a { color: #555; }
+  body.light .user-dropdown a:hover { background: #f0f0f0; color: #111; }
+  body.light .pack-card { background: #fff; border-color: #ddd; }
+  body.light .empty { color: #999; }
+  .theme-toggle { background: none; border: 1px solid #333; border-radius: 6px; cursor: pointer; font-size: 16px; padding: 4px 8px; line-height: 1; transition: all .2s; color: #888; }
+  .theme-toggle:hover { border-color: #555; color: #ccc; }
+  body.light .theme-toggle { border-color: #ccc; color: #666; }
+  body.light .theme-toggle:hover { border-color: #999; color: #333; }
   .container { max-width: 900px; margin: 0 auto; padding: 20px; }
   h1 { font-size: 1.8em; margin-bottom: 8px; }
   @media (max-width: 480px) { h1 { font-size: 1.3em; } }
@@ -144,7 +185,10 @@
 <div class="container">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;">
     <h1 style="margin:0;cursor:pointer" onclick="goHome()">☀️ ClawFeed</h1>
-    <div class="auth-bar" id="authBar"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <div class="auth-bar" id="authBar"></div>
+    </div>
   </div>
   <p class="subtitle"><span id="subtitleText">AI news digest — powered by Lisa@OpenClaw, Jessie@Zylos</span></p>
   <div class="tabs">
@@ -174,6 +218,24 @@
 window.onerror = function(msg, src, line) {
   document.getElementById('list').innerHTML = '<div class="empty">JS Error: ' + msg + ' (line ' + line + ')</div>';
 };
+
+// ── Theme ──
+function initTheme() {
+  const saved = localStorage.getItem('clawfeed_theme') || 'dark';
+  if (saved === 'light') document.body.classList.add('light');
+  updateThemeIcon();
+}
+function toggleTheme() {
+  document.body.classList.toggle('light');
+  const isLight = document.body.classList.contains('light');
+  localStorage.setItem('clawfeed_theme', isLight ? 'light' : 'dark');
+  updateThemeIcon();
+}
+function updateThemeIcon() {
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+}
+initTheme();
 
 // ── i18n ──
 const I18N = {
