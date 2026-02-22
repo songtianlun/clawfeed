@@ -1,6 +1,6 @@
 # ClawFeed
 
-> **Live Demo**: [digest.kevinhe.io](https://digest.kevinhe.io)
+> **Live Demo**: [clawfeed.kevinhe.io](https://clawfeed.kevinhe.io)
 
 ![Dashboard](docs/screenshot.png)
 
