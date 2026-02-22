@@ -12,9 +12,6 @@ npm install
 cp .env.example .env
 # Edit .env with your settings
 
-# Run data migration (if upgrading from JSON files)
-npm run migrate
-
 # Start API server
 npm start
 ```

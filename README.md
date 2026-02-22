@@ -64,9 +64,6 @@ cp .env.example .env
 # 2. Start the API server
 npm start
 # → API running on http://127.0.0.1:8767
-
-# 3. (Optional) Migrate existing data
-npm run migrate -- /path/to/old/digests/
 ```
 
 ## Environment Variables
