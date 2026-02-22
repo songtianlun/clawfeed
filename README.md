@@ -2,13 +2,9 @@
 
 > **Stop scrolling. Start knowing.**
 
-<div align="center">
 
-https://github.com/kevinho/clawfeed/releases/download/v0.2.0/demo.mp4
+[Live Demo：https://clawfeed.kevinhe.io ](https://clawfeed.kevinhe.io)
 
-[Live Demo](https://clawfeed.kevinhe.io)
-
-</div>
 
 AI-powered news digest tool that curates 5,000 accounts down to 10 highlights that matter. Generates structured summaries from Twitter/RSS feeds. Works as a standalone service or as an [OpenClaw](https://github.com/openclaw/openclaw) / [Zylos](https://github.com/zylos-ai) skill.
 
