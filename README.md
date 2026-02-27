@@ -61,8 +61,21 @@ npm install
 
 ### Option 5: Docker
 ```bash
-docker run -d -p 8767:8767 songtianlun/clawfeed
-docker run -d -p 8767:8767 -v clawfeed-data:/app/data songtianlun/clawfeed
+# Basic usage
+docker run -d -p 8767:8767 kevinho/clawfeed
+
+# With persistent data
+docker run -d -p 8767:8767 -v clawfeed-data:/app/data kevinho/clawfeed
+
+# With environment variables (recommended for production)
+docker run -d -p 8767:8767 \
+  -v clawfeed-data:/app/data \
+  -e ALLOWED_ORIGINS=https://yourdomain.com \
+  -e API_KEY=your-api-key \
+  -e GOOGLE_CLIENT_ID=your-client-id \
+  -e GOOGLE_CLIENT_SECRET=your-client-secret \
+  -e SESSION_SECRET=your-session-secret \
+  kevinho/clawfeed
 ```
 
 ## Quick Start
